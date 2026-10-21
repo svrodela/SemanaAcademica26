@@ -80,6 +80,7 @@
             max-height: 90vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            padding-bottom: 1.5rem;
         }
 
         @media (max-width: 640px) {
@@ -96,6 +97,22 @@
             
             .modal-overlay[style*="align-items: center"] {
                 align-items: flex-end;
+            }
+            
+            /* Visible scrollbar on mobile modal */
+            .modal-content::-webkit-scrollbar {
+                width: 6px;
+                display: block;
+            }
+            .modal-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .modal-content::-webkit-scrollbar-thumb {
+                background: rgba(56, 189, 248, 0.4);
+                border-radius: 3px;
+            }
+            .modal-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(56, 189, 248, 0.6);
             }
         }
 
@@ -228,14 +245,14 @@
         <!-- Header -->
         <header class="relative z-10 border-b border-[rgba(56,189,248,0.15)] bg-[rgba(10,25,47,0.8)] backdrop-blur-lg sticky top-0">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4 sm:py-6">
                     <div>
                         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-[var(--text-accent)] to-[var(--accent-orange)] bg-clip-text text-transparent">
                             Semana Académica 2026
                         </h1>
                         <p class="text-[var(--text-secondary)] text-sm mt-1">Ingeniería en Inteligencia Artificial — ITSRLL</p>
                     </div>
-                    <div class="filter-scroll flex gap-2 justify-center sm:justify-end overflow-x-auto pb-2" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <div class="filter-scroll flex gap-2 justify-center sm:justify-end overflow-x-auto pb-4 px-2" style="scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;">
                         <button 
                             data-filter="all" 
                             class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
