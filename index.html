@@ -77,6 +77,88 @@
             background: var(--card-bg);
             border: 1px solid rgba(56, 189, 248, 0.3);
             animation: modalEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 640px) {
+            .modal-content {
+                max-height: 85vh;
+                border-radius: 1.5rem 1.5rem 0 0;
+                animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .modal-overlay {
+                align-items: flex-end;
+                padding: 0;
+            }
+            
+            .modal-overlay[style*="align-items: center"] {
+                align-items: flex-end;
+            }
+        }
+
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-drag-handle {
+            display: none;
+        }
+        
+        @media (max-width: 640px) {
+            .modal-drag-handle {
+                display: block;
+                width: 40px;
+                height: 4px;
+                background: rgba(255,255,255,0.2);
+                border-radius: 2px;
+                margin: 0.75rem auto 0.5rem;
+                touch-action: none;
+            }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Better touch scrolling */
+        .touch-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Filter buttons horizontal scroll on mobile */
+        .filter-scroll {
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+        }
+        
+        .filter-btn {
+            scroll-snap-align: start;
+        }
+
+        /* Improve tap targets on mobile */
+        @media (max-width: 640px) {
+            .activity-card {
+                min-height: 120px;
+            }
+            
+            .filter-btn {
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .search-input {
+                padding: 0.875rem 1rem 0.875rem 2.75rem;
+                font-size: 1rem; /* Prevents zoom on iOS */
+            }
+        }
+
+        /* Prevent horizontal scroll on body */
+        body {
+            overflow-x: hidden;
         }
 
         @keyframes modalEnter {
@@ -153,7 +235,7 @@
                         </h1>
                         <p class="text-[var(--text-secondary)] text-sm mt-1">Ingeniería en Inteligencia Artificial — ITSRLL</p>
                     </div>
-                    <div class="flex flex-wrap gap-2 justify-center sm:justify-end">
+                    <div class="filter-scroll flex gap-2 justify-center sm:justify-end overflow-x-auto pb-2" style="scrollbar-width: none; -ms-overflow-style: none;">
                         <button 
                             data-filter="all" 
                             class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
@@ -269,6 +351,7 @@
             aria-describedby="modalDescription"
         >
             <div class="modal-content w-full max-w-2xl rounded-2xl p-6 sm:p-8 relative">
+                <div class="modal-drag-handle" aria-hidden="true"></div>
                 <button 
                     id="closeModal" 
                     class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] flex items-center justify-center transition-colors"
@@ -836,12 +919,85 @@
             
             // Trap focus
             trapFocus(modal);
+            
+            // Mobile swipe to close
+            setupSwipeToClose();
         }
 
         function closeModal() {
             modal.classList.add('hidden');
             document.body.style.overflow = '';
             selectedActivity = null;
+            cleanupSwipeToClose();
+        }
+
+        let swipeStartY = 0;
+        let swipeCurrentY = 0;
+        let isSwiping = false;
+        const modalContent = document.querySelector('.modal-content');
+
+        function setupSwipeToClose() {
+            if (!modalContent) return;
+            
+            const handleTouchStart = (e) => {
+                if (window.innerWidth > 640) return;
+                swipeStartY = e.touches[0].clientY;
+                isSwiping = true;
+                modalContent.style.transition = 'none';
+            };
+
+            const handleTouchMove = (e) => {
+                if (!isSwiping || window.innerWidth > 640) return;
+                swipeCurrentY = e.touches[0].clientY;
+                const deltaY = swipeCurrentY - swipeStartY;
+                
+                // Only allow downward swipe
+                if (deltaY > 0) {
+                    e.preventDefault();
+                    modalContent.style.transform = `translateY(${deltaY}px)`;
+                    modalContent.style.opacity = 1 - (deltaY / 300);
+                }
+            };
+
+            const handleTouchEnd = () => {
+                if (!isSwiping || window.innerWidth > 640) return;
+                isSwiping = false;
+                const deltaY = swipeCurrentY - swipeStartY;
+                
+                modalContent.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                
+                if (deltaY > 100) {
+                    // Swipe down enough to close
+                    modalContent.style.transform = 'translateY(100%)';
+                    modalContent.style.opacity = '0';
+                    setTimeout(closeModal, 200);
+                } else {
+                    // Snap back
+                    modalContent.style.transform = 'translateY(0)';
+                    modalContent.style.opacity = '1';
+                }
+            };
+
+            modalContent.addEventListener('touchstart', handleTouchStart, { passive: false });
+            modalContent.addEventListener('touchmove', handleTouchMove, { passive: false });
+            modalContent.addEventListener('touchend', handleTouchEnd);
+            modalContent.addEventListener('touchcancel', handleTouchEnd);
+            
+            // Store handlers for cleanup
+            modalContent._swipeHandlers = { handleTouchStart, handleTouchMove, handleTouchEnd };
+        }
+
+        function cleanupSwipeToClose() {
+            if (!modalContent || !modalContent._swipeHandlers) return;
+            const { handleTouchStart, handleTouchMove, handleTouchEnd } = modalContent._swipeHandlers;
+            modalContent.removeEventListener('touchstart', handleTouchStart);
+            modalContent.removeEventListener('touchmove', handleTouchMove);
+            modalContent.removeEventListener('touchend', handleTouchEnd);
+            modalContent.removeEventListener('touchcancel', handleTouchEnd);
+            modalContent.style.transition = '';
+            modalContent.style.transform = '';
+            modalContent.style.opacity = '';
+            delete modalContent._swipeHandlers;
         }
 
         function trapFocus(element) {
