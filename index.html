@@ -132,6 +132,25 @@
         .modal-drag-handle {
             display: none;
         }
+
+        /* Modal scroll buttons */
+        .modal-scroll-btn {
+            position: absolute;
+            right: -2.5rem;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-scroll-btn:focus-visible {
+            outline: 2px solid var(--text-accent);
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 640px) {
+            .modal-scroll-btn {
+                display: none !important;
+            }
+        }
         
         @media (max-width: 640px) {
             .modal-drag-handle {
@@ -236,18 +255,26 @@
 
         /* Mobile filter dropdown */
         .filter-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 1rem;
-            left: 1rem;
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: var(--card-bg);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 1rem;
-            padding: 1rem;
-            margin-top: 0.5rem;
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
-            animation: dropdownSlide 0.2s ease-out;
+            border-top: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1.5rem 1rem 2rem;
+            box-shadow: 0 -20px 40px -15px rgba(0, 0, 0, 0.4);
+            animation: dropdownSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 100;
+            max-height: 70vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @keyframes dropdownSlideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         @keyframes dropdownSlide {
@@ -262,9 +289,18 @@
         .filter-dropdown .filter-btn {
             width: 100%;
             justify-content: flex-start;
-            padding: 0.875rem 1rem;
+            padding: 1rem;
             border-radius: 0.75rem;
             font-size: 1rem;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-dropdown .filter-btn:hover,
+        .filter-dropdown .filter-btn.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: var(--text-accent);
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -473,6 +509,29 @@
         >
             <div class="modal-content w-full max-w-2xl rounded-2xl p-6 sm:p-8 relative">
                 <div class="modal-drag-handle" aria-hidden="true"></div>
+                
+                <!-- Scroll indicators -->
+                <button 
+                    id="modalScrollUp"
+                    class="modal-scroll-btn hidden sm:block absolute -left-10 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(56,189,248,0.2)] hover:bg-[var(--text-accent)] hover:text-[var(--bg-primary)] flex items-center justify-center transition-all text-[var(--text-accent)] focus-visible"
+                    aria-label="Desplazar hacia arriba"
+                    type="button"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                    </svg>
+                </button>
+                <button 
+                    id="modalScrollDown"
+                    class="modal-scroll-btn hidden sm:block absolute -left-10 bottom-1/2 translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(56,189,248,0.2)] hover:bg-[var(--text-accent)] hover:text-[var(--bg-primary)] flex items-center justify-center transition-all text-[var(--text-accent)] focus-visible"
+                    aria-label="Desplazar hacia abajo"
+                    type="button"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                
                 <button 
                     id="closeModal" 
                     class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] flex items-center justify-center transition-colors"
@@ -782,6 +841,8 @@
         const modalCalendarBtn = document.getElementById('modalCalendarBtn');
         const closeModalBtn = document.getElementById('closeModal');
         const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalScrollUp = document.getElementById('modalScrollUp');
+        const modalScrollDown = document.getElementById('modalScrollDown');
 
         // ============================================
         // UTILITIES
@@ -1050,6 +1111,9 @@
             
             // Mobile swipe to close
             setupSwipeToClose();
+            
+            // Scroll buttons
+            setupScrollButtons();
         }
 
         function closeModal() {
@@ -1057,6 +1121,7 @@
             document.body.style.overflow = '';
             selectedActivity = null;
             cleanupSwipeToClose();
+            cleanupScrollButtons();
         }
 
         let swipeStartY = 0;
@@ -1126,6 +1191,41 @@
             modalContent.style.transform = '';
             modalContent.style.opacity = '';
             delete modalContent._swipeHandlers;
+        }
+
+        function setupScrollButtons() {
+            if (!modalContent || !modalScrollUp || !modalScrollDown) return;
+            
+            const scrollAmount = 120; // pixels per click
+            
+            const updateButtonVisibility = () => {
+                const { scrollTop, scrollHeight, clientHeight } = modalContent;
+                modalScrollUp.classList.toggle('hidden', scrollTop <= 10);
+                modalScrollDown.classList.toggle('hidden', scrollTop + clientHeight >= scrollHeight - 10);
+            };
+            
+            modalScrollUp.addEventListener('click', () => {
+                modalContent.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+            });
+            
+            modalScrollDown.addEventListener('click', () => {
+                modalContent.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            });
+            
+            modalContent.addEventListener('scroll', updateButtonVisibility, { passive: true });
+            
+            // Initial check
+            setTimeout(updateButtonVisibility, 50);
+            
+            // Store for cleanup
+            modalContent._scrollHandlers = { updateButtonVisibility };
+        }
+
+        function cleanupScrollButtons() {
+            if (!modalContent || !modalContent._scrollHandlers) return;
+            const { updateButtonVisibility } = modalContent._scrollHandlers;
+            modalContent.removeEventListener('scroll', updateButtonVisibility);
+            delete modalContent._scrollHandlers;
         }
 
         function trapFocus(element) {
