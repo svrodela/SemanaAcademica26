@@ -81,6 +81,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 1.5rem;
+            padding-right: 1rem;
         }
 
         @media (max-width: 640px) {
@@ -88,6 +89,7 @@
                 max-height: 85vh;
                 border-radius: 1.5rem 1.5rem 0 0;
                 animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                padding-right: 1.5rem;
             }
             
             .modal-overlay {
@@ -101,18 +103,24 @@
             
             /* Visible scrollbar on mobile modal */
             .modal-content::-webkit-scrollbar {
-                width: 6px;
+                width: 8px;
                 display: block;
             }
             .modal-content::-webkit-scrollbar-track {
                 background: transparent;
             }
             .modal-content::-webkit-scrollbar-thumb {
-                background: rgba(56, 189, 248, 0.4);
-                border-radius: 3px;
+                background: rgba(56, 189, 248, 0.5);
+                border-radius: 4px;
+                min-height: 40px;
             }
             .modal-content::-webkit-scrollbar-thumb:hover {
-                background: rgba(56, 189, 248, 0.6);
+                background: rgba(56, 189, 248, 0.7);
+            }
+            
+            /* Ensure touch scrolling works on content area */
+            .modal-content {
+                touch-action: pan-y;
             }
         }
 
@@ -226,6 +234,39 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Mobile filter dropdown */
+        .filter-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 1rem;
+            left: 1rem;
+            background: var(--card-bg);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+            animation: dropdownSlide 0.2s ease-out;
+            z-index: 100;
+        }
+        
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .filter-dropdown.hidden {
+            display: none;
+        }
+        
+        .filter-dropdown .filter-btn {
+            width: 100%;
+            justify-content: flex-start;
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -252,44 +293,107 @@
                         </h1>
                         <p class="text-[var(--text-secondary)] text-sm mt-1">Ingeniería en Inteligencia Artificial — ITSRLL</p>
                     </div>
-                    <div class="filter-scroll flex gap-2 justify-center sm:justify-end overflow-x-auto pb-4 px-2" style="scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;">
-                        <button 
-                            data-filter="all" 
-                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
-                            aria-pressed="true"
-                        >
-                            Todos
-                        </button>
-                        <button 
-                            data-filter="conferencia" 
-                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                            aria-pressed="false"
-                        >
-                            Conferencias
-                        </button>
-                        <button 
-                            data-filter="cursos" 
-                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                            aria-pressed="false"
-                        >
-                            Cursos
-                        </button>
-                        <button 
-                            data-filter="deportes" 
-                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                            aria-pressed="false"
-                        >
-                            Deportes
-                        </button>
-                        <button 
-                            data-filter="especiales" 
-                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                            aria-pressed="false"
-                        >
-                            Especiales
-                        </button>
+                    <div class="relative flex items-center justify-end sm:justify-between w-full sm:w-auto gap-4 sm:gap-0">
+                        <!-- Desktop filter buttons -->
+                        <div class="hidden sm:flex flex-wrap gap-2 justify-end">
+                            <button 
+                                data-filter="all" 
+                                class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
+                                aria-pressed="true"
+                            >
+                                Todos
+                            </button>
+                            <button 
+                                data-filter="conferencia" 
+                                class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                aria-pressed="false"
+                            >
+                                Conferencias
+                            </button>
+                            <button 
+                                data-filter="cursos" 
+                                class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                aria-pressed="false"
+                            >
+                                Cursos
+                            </button>
+                            <button 
+                                data-filter="deportes" 
+                                class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                aria-pressed="false"
+                            >
+                                Deportes
+                            </button>
+                            <button 
+                                data-filter="especiales" 
+                                class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                aria-pressed="false"
+                            >
+                                Especiales
+                            </button>
+                        </div>
+                        <!-- Mobile hamburger menu -->
+                        <div class="sm:hidden relative">
+                            <button 
+                                id="filterHamburger"
+                                class="filter-btn p-3 rounded-xl"
+                                aria-label="Filtrar actividades"
+                                aria-expanded="false"
+                                aria-controls="filterDropdown"
+                            >
+                                <svg class="w-6 h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                </svg>
+                            </button>
+                            <div 
+                                id="filterDropdown"
+                                class="filter-dropdown hidden"
+                                role="menu"
+                                aria-label="Filtros de categorías"
+                            >
+                                <button 
+                                    data-filter="all" 
+                                    class="filter-btn px-4 py-3 rounded-lg text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
+                                    aria-pressed="true"
+                                    role="menuitem"
+                                >
+                                    Todos
+                                </button>
+                                <button 
+                                    data-filter="conferencia" 
+                                    class="filter-btn px-4 py-3 rounded-lg text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                    aria-pressed="false"
+                                    role="menuitem"
+                                >
+                                    Conferencias
+                                </button>
+                                <button 
+                                    data-filter="cursos" 
+                                    class="filter-btn px-4 py-3 rounded-lg text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                    aria-pressed="false"
+                                    role="menuitem"
+                                >
+                                    Cursos
+                                </button>
+                                <button 
+                                    data-filter="deportes" 
+                                    class="filter-btn px-4 py-3 rounded-lg text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                    aria-pressed="false"
+                                    role="menuitem"
+                                >
+                                    Deportes
+                                </button>
+                                <button 
+                                    data-filter="especiales" 
+                                    class="filter-btn px-4 py-3 rounded-lg text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                    aria-pressed="false"
+                                    role="menuitem"
+                                >
+                                    Especiales
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
                 
                 <!-- Search Bar -->
                 <div class="pb-6">
@@ -666,6 +770,8 @@
         const searchInput = document.getElementById('searchInput');
         const clearSearchBtn = document.getElementById('clearSearch');
         const filterButtons = document.querySelectorAll('[data-filter]');
+        const filterHamburger = document.getElementById('filterHamburger');
+        const filterDropdown = document.getElementById('filterDropdown');
         const statsTotal = document.getElementById('statsTotal');
         const statsVisible = document.getElementById('statsVisible');
         const statsFiltered = document.getElementById('statsFiltered');
@@ -881,6 +987,11 @@
                 btn.classList.toggle('active', isActive);
                 btn.setAttribute('aria-pressed', isActive);
             });
+            // Close mobile dropdown after selection
+            if (filterDropdown && !filterDropdown.classList.contains('hidden')) {
+                filterHamburger.setAttribute('aria-expanded', 'false');
+                filterDropdown.classList.add('hidden');
+            }
             applyFilters();
         }
 
@@ -1047,6 +1158,35 @@
             btn.addEventListener('click', () => setFilter(btn.dataset.filter));
         });
 
+        // Hamburger menu toggle
+        if (filterHamburger && filterDropdown) {
+            filterHamburger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = filterHamburger.getAttribute('aria-expanded') === 'true';
+                filterHamburger.setAttribute('aria-expanded', !isExpanded);
+                filterDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!filterDropdown.classList.contains('hidden') && 
+                    !filterHamburger.contains(e.target) && 
+                    !filterDropdown.contains(e.target)) {
+                    filterHamburger.setAttribute('aria-expanded', 'false');
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+
+            // Close dropdown on Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !filterDropdown.classList.contains('hidden')) {
+                    filterHamburger.setAttribute('aria-expanded', 'false');
+                    filterDropdown.classList.add('hidden');
+                    filterHamburger.focus();
+                }
+            });
+        }
+
         searchInput.addEventListener('input', (e) => setSearch(e.target.value));
         
         clearSearchBtn.addEventListener('click', () => {
@@ -1074,18 +1214,44 @@
         function init() {
             renderActivities();
             
-            // Keyboard navigation for filter buttons
-            filterButtons.forEach((btn, index) => {
+            // Keyboard navigation for DESKTOP filter buttons only
+            const desktopFilterButtons = document.querySelectorAll('.hidden.sm\\:flex [data-filter], .hidden.sm\\:flex [data-filter]');
+            const allFilterButtons = document.querySelectorAll('[data-filter]');
+            
+            // Keyboard nav for desktop (visible on sm+)
+            allFilterButtons.forEach((btn, index) => {
                 btn.addEventListener('keydown', (e) => {
+                    if (window.innerWidth < 640) return; // Only on desktop
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                         e.preventDefault();
-                        filterButtons[(index + 1) % filterButtons.length].focus();
+                        allFilterButtons[(index + 1) % allFilterButtons.length].focus();
                     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
                         e.preventDefault();
-                        filterButtons[(index - 1 + filterButtons.length) % filterButtons.length].focus();
+                        allFilterButtons[(index - 1 + allFilterButtons.length) % allFilterButtons.length].focus();
                     }
                 });
             });
+
+            // Keyboard nav for mobile dropdown
+            if (filterDropdown) {
+                const dropdownButtons = filterDropdown.querySelectorAll('[data-filter]');
+                dropdownButtons.forEach((btn, index) => {
+                    btn.addEventListener('keydown', (e) => {
+                        if (window.innerWidth >= 640) return; // Only on mobile
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            dropdownButtons[(index + 1) % dropdownButtons.length].focus();
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            dropdownButtons[(index - 1 + dropdownButtons.length) % dropdownButtons.length].focus();
+                        } else if (e.key === 'Escape') {
+                            filterHamburger.setAttribute('aria-expanded', 'false');
+                            filterDropdown.classList.add('hidden');
+                            filterHamburger.focus();
+                        }
+                    });
+                });
+            }
         }
 
         // Start
