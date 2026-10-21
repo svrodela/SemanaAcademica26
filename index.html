@@ -263,13 +263,25 @@
             background: var(--card-bg);
             border-top: 1px solid rgba(56, 189, 248, 0.2);
             border-radius: 1.5rem 1.5rem 0 0;
-            padding: 1.5rem 1rem 2rem;
+            padding: 3rem 1rem 3rem;
             box-shadow: 0 -20px 40px -15px rgba(0, 0, 0, 0.4);
             animation: dropdownSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 100;
-            max-height: 70vh;
+            max-height: 80vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+        }
+        
+        .filter-dropdown::before {
+            content: '';
+            position: absolute;
+            top: 0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
         }
         
         @keyframes dropdownSlideUp {
@@ -1132,9 +1144,24 @@
         function setupSwipeToClose() {
             if (!modalContent) return;
             
+            const dragHandle = document.querySelector('.modal-drag-handle');
+            
             const handleTouchStart = (e) => {
                 if (window.innerWidth > 640) return;
-                swipeStartY = e.touches[0].clientY;
+                
+                const touchY = e.touches[0].clientY;
+                const contentRect = modalContent.getBoundingClientRect();
+                const handleRect = dragHandle?.getBoundingClientRect();
+                
+                // Only allow swipe-to-close if:
+                // 1. Touch starts on/near the drag handle (top 60px of modal)
+                // 2. OR at very top of scroll and touching content
+                const isOnHandle = handleRect && touchY >= handleRect.top - 10 && touchY <= handleRect.bottom + 20;
+                const isAtTopAndTouchingContent = modalContent.scrollTop <= 0 && touchY >= contentRect.top && touchY <= contentRect.top + 60;
+                
+                if (!isOnHandle && !isAtTopAndTouchingContent) return;
+                
+                swipeStartY = touchY;
                 isSwiping = true;
                 modalContent.style.transition = 'none';
             };
