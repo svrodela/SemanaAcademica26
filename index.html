@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Horario de actividades Semana Académica 2026 - Ingeniería en Inteligencia Artificial ITSRLL">
+    <title>Semana Académica 2026 | ITSRLL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0A192F;
+            --bg-secondary: #0B1D3A;
+            --card-bg: #112240;
+            --card-border: #38BDF8;
+            --accent-orange: #FF7A00;
+            --accent-orange-hover: #EA580C;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8892B0;
+            --text-accent: #38BDF8;
+        }
+
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 122, 0, 0.06) 0%, transparent 50%);
+        }
+
+        .activity-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .activity-card:hover {
+            border-color: var(--card-border);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--card-border);
+            transform: translateY(-2px);
+        }
+
+        .activity-card.category-conferencia { border-left: 4px solid var(--text-accent); }
+        .activity-card.category-cursos { border-left: 4px solid var(--accent-orange); }
+        .activity-card.category-deportes { border-left: 4px solid #10B981; }
+        .activity-card.category-especiales { border-left: 4px solid #F59E0B; }
+        .activity-card.category-receso { border-left: 4px solid #10B981; }
+
+        .filter-btn {
+            transition: all 0.2s ease;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover:not(:disabled) {
+            border-color: var(--card-border);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .filter-btn.active {
+            color: var(--text-accent);
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .modal-overlay {
+            backdrop-filter: blur(8px);
+            background: rgba(10, 25, 47, 0.9);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            animation: modalEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalEnter {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            opacity: 0;
+        }
+
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+        .stagger-6 { animation-delay: 0.3s; }
+        .stagger-7 { animation-delay: 0.35s; }
+        .stagger-8 { animation-delay: 0.4s; }
+        .stagger-9 { animation-delay: 0.45s; }
+        .stagger-10 { animation-delay: 0.5s; }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+            border-color: var(--text-accent);
+        }
+
+        .calendar-btn {
+            transition: all 0.2s ease;
+        }
+
+        .calendar-btn:hover {
+            background: var(--accent-orange);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .day-badge {
+            background: linear-gradient(135deg, var(--accent-orange) 0%, #EA580C 100%);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .focus-visible:focus {
+            outline: 2px solid var(--text-accent);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-[var(--text-primary)] antialiased">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="relative z-10 border-b border-[rgba(56,189,248,0.15)] bg-[rgba(10,25,47,0.8)] backdrop-blur-lg sticky top-0">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-[var(--text-accent)] to-[var(--accent-orange)] bg-clip-text text-transparent">
+                            Semana Académica 2026
+                        </h1>
+                        <p class="text-[var(--text-secondary)] text-sm mt-1">Ingeniería en Inteligencia Artificial — ITSRLL</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-center sm:justify-end">
+                        <button 
+                            data-filter="all" 
+                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] active"
+                            aria-pressed="true"
+                        >
+                            Todos
+                        </button>
+                        <button 
+                            data-filter="conferencia" 
+                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            aria-pressed="false"
+                        >
+                            Conferencias
+                        </button>
+                        <button 
+                            data-filter="cursos" 
+                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            aria-pressed="false"
+                        >
+                            Cursos
+                        </button>
+                        <button 
+                            data-filter="deportes" 
+                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            aria-pressed="false"
+                        >
+                            Deportes
+                        </button>
+                        <button 
+                            data-filter="especiales" 
+                            class="filter-btn px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            aria-pressed="false"
+                        >
+                            Especiales
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="pb-6">
+                    <div class="relative max-w-xl mx-auto sm:mx-0">
+                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input 
+                            type="search" 
+                            id="searchInput"
+                            placeholder="Buscar por actividad, salón o lugar..."
+                            class="search-input w-full pl-12 pr-4 py-3 bg-[var(--card-bg)] border border-[rgba(56,189,248,0.2)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none transition-all"
+                            aria-label="Buscar actividades"
+                        >
+                        <button 
+                            id="clearSearch"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors hidden"
+                            aria-label="Limpiar búsqueda"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <!-- Stats Bar -->
+            <div class="mb-8 flex flex-wrap items-center gap-4 text-sm text-[var(--text-secondary)]" aria-live="polite">
+                <span id="statsTotal" class="font-medium">12 actividades totales</span>
+                <span class="w-px h-4 bg-[rgba(56,189,248,0.2)]"></span>
+                <span id="statsVisible" class="font-medium text-[var(--text-accent)]">12 visibles</span>
+                <span class="w-px h-4 bg-[rgba(56,189,248,0.2)]"></span>
+                <span id="statsFiltered" class="hidden">0 filtradas</span>
+            </div>
+
+            <!-- Activities Grid -->
+            <div 
+                id="activitiesGrid" 
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 scrollbar-hide"
+                role="list"
+                aria-label="Lista de actividades"
+            ></div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-16">
+                <svg class="mx-auto h-16 w-16 text-[var(--text-secondary)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-[var(--text-primary)]">No se encontraron actividades</h3>
+                <p class="mt-2 text-[var(--text-secondary)]">Intenta ajustar tus filtros o términos de búsqueda</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-[rgba(56,189,248,0.1)] py-6 px-4">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[var(--text-secondary)]">
+                <p>Semana Académica 2026 — Ingeniería en Inteligencia Artificial, ITSRLL</p>
+                <p class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[var(--accent-orange)]"></span>
+                    Hecho con precisión para la comunidad IA <span class="text-[var(--accent-orange)] font-semibold">#CyberNight</span>
+                </p>
+            </div>
+        </footer>
+
+        <!-- Modal -->
+        <div 
+            id="modal" 
+            class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalTitle"
+            aria-describedby="modalDescription"
+        >
+            <div class="modal-content w-full max-w-2xl rounded-2xl p-6 sm:p-8 relative">
+                <button 
+                    id="closeModal" 
+                    class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] flex items-center justify-center transition-colors"
+                    aria-label="Cerrar modal"
+                >
+                    <svg class="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <div class="mb-6">
+                    <span id="modalCategory" class="inline-block px-3 py-1 text-xs font-semibold rounded-full mb-3"></span>
+                    <h2 id="modalTitle" class="text-2xl sm:text-3xl font-bold tracking-tight"></h2>
+                </div>
+
+                <div id="modalDescription" class="space-y-4 text-[var(--text-secondary)]">
+                    <!-- Dynamic content -->
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-[rgba(56,189,248,0.15)] flex flex-col sm:flex-row gap-3">
+                    <a 
+                        id="modalCalendarBtn"
+                        href="#" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="calendar-btn flex-1 sm:flex-none px-6 py-3 rounded-xl font-semibold text-center border border-[rgba(56,189,248,0.3)] hover:border-[var(--text-accent)] text-[var(--text-accent)] transition-all"
+                    >
+                        <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Agregar a Google Calendar
+                    </a>
+                    <button 
+                        id="modalCloseBtn"
+                        class="flex-1 sm:flex-none px-6 py-3 rounded-xl font-semibold text-center bg-[var(--accent-orange)] hover:bg-[var(--accent-orange-hover)] text-white transition-colors"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DATA
+        // ============================================
+        const ACTIVITIES = [
+            {
+                id: 1,
+                day: 'Lunes',
+                dayIndex: 1,
+                time: '10:30 am',
+                endTime: null,
+                title: 'El Éxito no es para Payasos',
+                location: 'Salón Ganadera — https://www.google.com/maps/place/Salon+El+Ganadero/@24.4488655,-104.1146468,793m/data=!3m2!1e3!4b1!4m6!3m5!1s0x869af1003df1f683:0xd5b67da22c1a51f7!8m2!3d24.4488655!4d-104.1146468!16s%2Fg%2F11x3192wkm?entry=ttu&g_ep=EgoyMDI2MTAxOC4wIKXMDSoASAFQAw%3D%3D',
+                category: 'conferencia',
+                categoryLabel: 'Conferencia',
+                description: 'Conferencia magistral inaugural de la Semana Académica 2026 a cargo del Ing. Julio Cesar López Hernández "El Gabbo". Dirigida a las carreras de Ingeniería en Informática e Ingeniería en Inteligencia Artificial. Un tema de motivación personal orientado a eliminar el "no puedo", fortalecer la confianza, reconocer el valor del aprendizaje en el error y animarte a que vale la pena arriesgarse para alcanzar tus metas.<br><br><a href="https://www.google.com/maps/place/Salon+El+Ganadero/@24.4488655,-104.1146468,793m/data=!3m2!1e3!4b1!4m6!3m5!1s0x869af1003df1f683:0xd5b67da22c1a51f7!8m2!3d24.4488655!4d-104.1146468!16s%2Fg%2F11x3192wkm?entry=ttu&g_ep=EgoyMDI2MTAxOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="text-[var(--text-accent)] hover:underline flex items-center gap-1 inline-flex mt-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Cómo llegar al Salón Ganadera</a>',
+                tips: 'Llega 15 minutos antes para ubicar tu lugar. Asiste con la playera de la carrera. Evento obligatorio para toda la comunidad estudiantil. No te la pierdas.'
+            },
+            {
+                id: 2,
+                day: 'Martes',
+                dayIndex: 2,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Programando con Agentes Cloud Code',
+                location: 'Laboratorio de Redes (LR)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Aprenderás a darle superpoderes a tu entorno de desarrollo para que la IA entienda exactamente lo que necesitas, automatice tareas repetitivas y agilice la creación de tus aplicaciones. No importa si estás dando tus primeros pasos o si ya tienes experiencia, este curso te dará la confianza y las habilidades clave para liderar el futuro de la programación asistida por IA. ¡El futuro del desarrollo de software se escribe desde tu terminal y tú estás a un clic de dominarlo! Ven con energía, curiosidad y ganas de innovar. ¡Te esperamos dentro! Impartido por el Ing. Gerardo Herrera López. Dirigido a 1er y 3er semestre.',
+                tips: 'Trae laptop con cuenta de Google Cloud configurada. Se recomienda experiencia básica en línea de comandos. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 3,
+                day: 'Martes',
+                dayIndex: 2,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Desarrollo de Software Impulsado por IA',
+                location: 'Laboratorio de Cómputo (LC)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Aprenderás a conectar modelos avanzados con tus propias bases de conocimiento, optimizar el contexto para resolver problemas complejos de negocio y automatizar pipelines de despliegue continuos con el respaldo de la IA. Si estás listo para dejar de usar la IA como un simple asistente de chat y empezar a diseñarla como el motor central de tus aplicaciones e infraestructura, este curso es para ti. Ven con mentalidad de arquitecto, desafía los límites de la tecnología y prepárate para liderar la próxima ola de la ingeniería de software. ¡El siguiente nivel de tu carrera comienza aquí! Impartido por Sebastián Almeda e Iván Valles. Dirigido a 5to y 7mo semestre.',
+                tips: 'Instala VS Code y GitHub Copilot antes de la sesión. Conocimientos básicos de programación requeridos. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 4,
+                day: 'Martes',
+                dayIndex: 2,
+                time: '11:00 am',
+                endTime: '11:30 am',
+                title: 'Receso - Desayuno en Palapas',
+                location: 'Palapas del Edificio A',
+                category: 'cursos',
+                categoryLabel: 'Receso',
+                description: 'Receso para desayuno en las palapas del Edificio A. Aplica para todos los cursos de la mañana (Martes, Miércoles y Jueves de 11:00 a 11:30).',
+                tips: 'Disfruta tu desayuno en las palapas del Edificio A. Los cursos reanudan a las 11:30 am.'
+            },
+            {
+                id: 5,
+                day: 'Martes',
+                dayIndex: 2,
+                time: '05:00 pm',
+                endTime: null,
+                title: 'Carrera ITSRLL',
+                location: 'General',
+                category: 'deportes',
+                categoryLabel: 'Deportes',
+                description: 'Aquí no importa si eres el más rápido o si es tu primera vez en una línea de salida. Corre, trota o camina; ¡lo verdaderamente importante es participar, convivir y cruzar la meta! Cada paso que des cuenta para fortalecer nuestro espíritu de Halcones. Prepara tu mejor actitud, trae ropa ligera y, por supuesto, porta con orgullo tu playera deportiva del ITSRLL para pintar la ruta. Ven con tus amigos, compañeros o profesores a disfrutar de una jornada llena de energía y salud. ¡Te esperamos para compartir esta gran experiencia!',
+                tips: 'Usa ropa deportiva cómoda e hidrátate bien. Punto de salida: explanada principal. Porta tu playera deportiva del ITSRLL.'
+            },
+            {
+                id: 6,
+                day: 'Miércoles',
+                dayIndex: 3,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Programando con Agentes Cloud Code',
+                location: 'Laboratorio de Redes (LR)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Continuación del curso impartido por el Ing. Gerardo Herrera López. Profundización en agentes de IA y despliegue en Cloud Code. Dirigido a 1er y 3er semestre.',
+                tips: 'Mismo grupo que el martes. Trae avances del proyecto. Se trabajará en despliegue y testing. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 7,
+                day: 'Miércoles',
+                dayIndex: 3,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Desarrollo de Software Impulsado por IA',
+                location: 'Laboratorio de Cómputo (LC)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Segunda sesión con Sebastián Almeda e Iván Valles. Patrones avanzados de prompting, testing automatizado y CI/CD con IA. Dirigido a 5to y 7mo semestre.',
+                tips: 'Presenta avances del proyecto del martes. Laptop con entorno de desarrollo listo. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 8,
+                day: 'Miércoles',
+                dayIndex: 3,
+                time: '11:00 am',
+                endTime: '11:30 am',
+                title: 'Receso - Desayuno en Palapas',
+                location: 'Palapas del Edificio A',
+                category: 'cursos',
+                categoryLabel: 'Receso',
+                description: 'Receso para desayuno en las palapas del Edificio A. Aplica para todos los cursos de la mañana (Martes, Miércoles y Jueves de 11:00 a 11:30).',
+                tips: 'Disfruta tu desayuno en las palapas del Edificio A. Los cursos reanudan a las 11:30 am.'
+            },
+            {
+                id: 9,
+                day: 'Miércoles',
+                dayIndex: 3,
+                time: '03:00 pm',
+                endTime: null,
+                title: 'AI in Our Day-to-Day: Three Practical Engineering Cases',
+                location: 'General',
+                category: 'conferencia',
+                categoryLabel: 'Conferencia',
+                description: '¿Cómo utiliza un líder tecnológico global la inteligencia artificial en su trabajo cotidiano? Acompaña a <strong>Javier Pacheco</strong>, Director de Engineering Operations en Hyatt Hotels Corporation, en su conferencia <strong>"AI in Our Day-to-Day: Three Practical Engineering Cases"</strong>. Conoce tres casos reales de operaciones de TI donde la IA optimiza recursos y resuelve problemas, sin olvidar un factor clave: la tecnología puede equivocarse y nuestro criterio profesional sigue siendo el motor principal. ¡Aprende de un experto con más de 25 años de trayectoria internacional en transformación digital!',
+                tips: ''
+            },
+            {
+                id: 10,
+                day: 'Miércoles',
+                dayIndex: 3,
+                time: '05:00 pm',
+                endTime: null,
+                title: '40 Artificiales Dijeron',
+                location: 'CI',
+                category: 'especiales',
+                categoryLabel: 'Especiales',
+                description: '¡La encuesta dice...! Bienvenidos a "40 Artificiales Dijeron", el concurso más divertido y competitivo del evento, adaptado por primera vez al mundo de la Inteligencia Artificial. ¿Qué es lo primero que piensa un programador cuando se cae el servidor? ¿Cuál es la herramienta de IA que más usan los estudiantes para salvar el semestre? Preguntamos a 40 ingenieros, docentes y entusiastas de la tecnología, ¡y tú tendrás que adivinar las respuestas más populares! Reúne a tu equipo, pon a prueba tu rapidez mental, tu intuición tecnológica y demuestra qué tanto conoces de la IA. No necesitas ser un científico de datos, solo necesitas conocer cómo piensa nuestra comunidad. ¡Risas, competencia y grandes sorpresas te esperan!',
+                tips: 'Forma equipo de 4-5 personas. Inscripciones con organizadores del evento hasta el martes.'
+            },
+            {
+                id: 11,
+                day: 'Jueves',
+                dayIndex: 4,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Programando con Agentes Cloud Code',
+                location: 'Laboratorio de Redes (LR)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Sesión final del curso con el Ing. Gerardo Herrera López. Evaluación de proyectos, despliegue en producción y mejores prácticas. Dirigido a 1er y 3er semestre.',
+                tips: 'Entrega obligatoria del proyecto final. Prepara demo funcional de 5 minutos. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 12,
+                day: 'Jueves',
+                dayIndex: 4,
+                time: '09:00 am',
+                endTime: '2:00 pm',
+                title: 'Desarrollo de Software Impulsado por IA',
+                location: 'Laboratorio de Cómputo (LC)',
+                category: 'cursos',
+                categoryLabel: 'Cursos',
+                description: 'Sesión de cierre con Sebastián Almeda e Iván Valles. Evaluación final, revisión de código generado por IA y retrospectiva. Dirigido a 5to y 7mo semestre.',
+                tips: 'Entrega del proyecto completo. Incluye documentación y pruebas automatizadas generadas con IA. Receso de 11:00 a 11:30 para desayuno en las palapas del Edificio A.'
+            },
+            {
+                id: 13,
+                day: 'Jueves',
+                dayIndex: 4,
+                time: '11:00 am',
+                endTime: '11:30 am',
+                title: 'Receso - Desayuno en Palapas',
+                location: 'Palapas del Edificio A',
+                category: 'cursos',
+                categoryLabel: 'Receso',
+                description: 'Receso para desayuno en las palapas del Edificio A. Aplica para todos los cursos de la mañana (Martes, Miércoles y Jueves de 11:00 a 11:30).',
+                tips: 'Disfruta tu desayuno en las palapas del Edificio A. Los cursos reanudan a las 11:30 am.'
+            },
+            {
+                id: 14,
+                day: 'Jueves',
+                dayIndex: 4,
+                time: '04:00 pm',
+                endTime: null,
+                title: 'Encuentros Deportivos',
+                location: 'Parque San José — https://www.google.com/maps/place/Parque+%E2%80%9CSan+Jos%C3%A9%E2%80%9D+Guadalupe+Victoria/data=!4m2!3m1!1s0x869af0417351752d:0xbdfa82fcd99575c3?sa=X&ved=1t:242&hl=es-MX&ictx=111',
+                category: 'deportes',
+                categoryLabel: 'Deportes',
+                description: '¡Hay un lugar para todos en nuestra jornada de convivencia! Ven a divertirte en grande con tres opciones hechas a tu medida: pon a prueba tu puntería en el <strong>Torneo de Pichada</strong>, saca tus mejores remates en las <strong>Retas de Voleibol</strong> o relájate y pasa un gran rato en la <strong>Zona de Juegos Alternativos</strong>, ideal para convivir y reír a tu propio ritmo con dinámicas recreativas si prefieres no entrar a la cancha. ¡Trae tu playera deportiva, elige tu actividad y sé parte del ambiente!<br><br><a href="https://www.google.com/maps/place/Parque+%E2%80%9CSan+Jos%C3%A9%E2%80%9D+Guadalupe+Victoria/data=!4m2!3m1!1s0x869af0417351752d:0xbdfa82fcd99575c3?sa=X&ved=1t:242&hl=es-MX&ictx=111" target="_blank" rel="noopener noreferrer" class="text-[var(--text-accent)] hover:underline flex items-center gap-1 inline-flex mt-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Cómo llegar al Parque San José</a>',
+                tips: 'Lleva agua y protector solar. Trae tu playera deportiva del ITSRLL.'
+            },
+            {
+                id: 15,
+                day: 'Jueves',
+                dayIndex: 4,
+                time: '08:00 pm',
+                endTime: null,
+                title: 'Campamento',
+                location: 'Edificio C',
+                category: 'especiales',
+                categoryLabel: 'Especiales',
+                description: '¡Llegó el momento más esperado de todos! Prepárate para vivir una noche inolvidable en el <strong>Gran Campamento</strong>, la actividad insignia del evento que se llevará a cabo <strong>dentro de las instalaciones de la escuela</strong>. Prepárate para una velada única diseñada para conectar, reír y crear recuerdos para toda la vida. Tendremos una agenda espectacular que no te dará un solo segundo de aburrimiento: romperemos el hielo con divertidas <strong>dinámicas de integración</strong>, cantaremos a todo pulmón en el <strong>karaoke</strong>, luciremos los mejores estilos en la <strong>pasarela de pijamas y disfraces</strong> y competiremos en la zona de <strong>videojuegos</strong>. Para los amantes de las emociones fuertes, la <strong>casa del terror</strong> pondrá a prueba tus nervios, mientras que los que prefieren algo más relajado podrán disfrutar de una buena función de <strong>cine</strong>. Todo esto acompañado de una tradicional <strong>fogata</strong>, deliciosa cena y la mejor atmósfera de <strong>convivencia</strong> escolar. ¡Trae tu pijama o disfraz más original y toda tu energía para la mejor noche del año! #CyberNight',
+                tips: 'Asegúrate de empacar los siguientes artículos indispensables:\n• Para el descanso: Casa de campaña (puedes compartirla con tus amigos), bolsa de dormir o cobijas térmicas, almohada y un aislante o colchoneta.\n• Ropa y calzado: Tu pijama más original para la pasarela, una muda de ropa cómoda, tenis y una chamarra o suéter grueso (¡la noche puede ser fría!).\n• Artículos de higiene: Cepillo y pasta de dientes, desodorante, toallitas húmedas y repelente de mosquitos.\n• Herramientas útiles: Linterna con pilas cargadas y un termo para tus bebidas.\n⚠️ AVISO IMPORTANTE DE SEGURIDAD:\nPara garantizar una convivencia sana, segura y familiar para toda la comunidad, habrá un punto de revisión obligatorio en el acceso. Queda estrictamente prohibida la entrada con bebidas alcohólicas, sustancias prohibidas u objetos punzocortantes. ¡Cuidémonos entre todos para que sea una experiencia inolvidable!'
+            },
+            {
+                id: 16,
+                day: 'Viernes',
+                dayIndex: 5,
+                time: '10:00 am',
+                endTime: null,
+                title: 'Foro de Egresados y DuranIA',
+                location: 'Audiovisual',
+                category: 'conferencia',
+                categoryLabel: 'Conferencia',
+                description: '¡El talento que está transformando el futuro se reúne en casa! Te invitamos al <strong>Foro de Egresados y Equipo DuranIA</strong>, un espacio de conexión clave para inspirarte con las historias de éxito, retos y proyectos reales de quienes hoy lideran la innovación tecnológica. Ven a reencontrarte con tu comunidad, expandir tu red de contactos y descubrir cómo la Inteligencia Artificial está abriendo nuevas fronteras profesionales. ¡Tu experiencia suma, tu presencia inspira; ven a conectar y a construir el mañana juntos!',
+                tips: 'Prepara preguntas para los panelistas. Espacio para networking al finalizar. Registro de asistencia obligatorio.'
+            },
+            {
+                id: 17,
+                day: 'Viernes',
+                dayIndex: 5,
+                time: '12:00 pm',
+                endTime: null,
+                title: 'Comida de Convivencia y Cierre',
+                location: 'Salón Temazcal — https://www.google.com/maps/place/Salon+Temazcal/@24.4419997,-104.1298972,396m/data=!3m1!1e3!4m6!3m5!1s0x869af10d1bc018d3:0x12616cfdd0b032fb!8m2!3d24.4416872!4d-104.1283522!16s%2Fg%2F11f66ypwyp?entry=ttu&g_ep=EgoyMDI2MTAxOC4wIKXMDSoASAFQAw%3D%3D',
+                category: 'especiales',
+                categoryLabel: 'Especiales',
+                description: '¡Llegó el momento de celebrar el éxito de todo el evento! Te esperamos en nuestra gran <strong>Comida de Convivencia</strong> para compartir historias, relajarnos y disfrutar de una tradicional <strong>taquiza</strong> entre amigos y compañeros. En este marco de fiesta, llevaremos a cabo el <strong>Cierre Oficial</strong> y la <strong>Entrega de Reconocimientos</strong>, donde aplaudiremos el esfuerzo de los ganadores de los torneos, el talento de los conferencistas y la participación de cada uno de ustedes. Ven a despedir esta gran jornada con el mejor ambiente, una excelente comida y el orgullo de pertenecer a nuestra comunidad. ¡La mesa está lista para celebrar juntos!<br><br><a href="https://www.google.com/maps/place/Salon+Temazcal/@24.4419997,-104.1298972,396m/data=!3m1!1e3!4m6!3m5!1s0x869af10d1bc018d3:0x12616cfdd0b032fb!8m2!3d24.4416872!4d-104.1283522!16s%2Fg%2F11f66ypwyp?entry=ttu&g_ep=EgoyMDI2MTAxOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="text-[var(--text-accent)] hover:underline flex items-center gap-1 inline-flex mt-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Cómo llegar al Salón Temazcal</a>',
+                tips: 'Vestimenta casual elegante. Confirma asistencia en coordinación antes del miércoles.'
+            }
+        ];
+
+        const CATEGORY_CONFIG = {
+            conferencia: { label: 'Conferencia', color: 'bg-[var(--text-accent)]', textColor: 'text-[var(--bg-primary)]', icon: '🎤' },
+            cursos: { label: 'Cursos', color: 'bg-[var(--accent-orange)]', textColor: 'text-white', icon: '📚' },
+            deportes: { label: 'Deportes', color: 'bg-green-500', textColor: 'text-white', icon: '⚽' },
+            especiales: { label: 'Especiales', color: 'bg-amber-500', textColor: 'text-white', icon: '✨' },
+            receso: { label: 'Receso', color: 'bg-emerald-500', textColor: 'text-white', icon: '☕' }
+        };
+
+        const DAY_ORDER = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+
+        // ============================================
+        // STATE
+        // ============================================
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let filteredActivities = [...ACTIVITIES];
+        let selectedActivity = null;
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const activitiesGrid = document.getElementById('activitiesGrid');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const statsTotal = document.getElementById('statsTotal');
+        const statsVisible = document.getElementById('statsVisible');
+        const statsFiltered = document.getElementById('statsFiltered');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalCalendarBtn = document.getElementById('modalCalendarBtn');
+        const closeModalBtn = document.getElementById('closeModal');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function parseTimeToDate(timeStr, dayIndex, isEnd = false) {
+            const baseDate = new Date('2026-02-16'); // Lunes 16 Feb 2026
+            const targetDate = new Date(baseDate);
+            targetDate.setDate(baseDate.getDate() + (dayIndex - 1));
+            
+            let time = timeStr;
+            if (isEnd && timeStr.includes(' - ')) {
+                time = timeStr.split(' - ')[1];
+            } else if (timeStr.includes(' - ')) {
+                time = timeStr.split(' - ')[0];
+            }
+            
+            const [timePart, period] = time.trim().split(' ');
+            let [hours, minutes] = timePart.split(':').map(Number);
+            if (period === 'pm' && hours !== 12) hours += 12;
+            if (period === 'am' && hours === 12) hours = 0;
+            
+            targetDate.setHours(hours, minutes || 0, 0, 0);
+            return targetDate;
+        }
+
+        function formatDateForCalendar(date) {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        }
+
+        function generateGoogleCalendarUrl(activity) {
+            const startDate = parseTimeToDate(activity.time, activity.dayIndex);
+            const endDate = activity.endTime 
+                ? parseTimeToDate(activity.time, activity.dayIndex, true)
+                : new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // Default 2 hours
+
+            const params = new URLSearchParams({
+                action: 'TEMPLATE',
+                text: `[Semana Académica 2026] ${activity.title}`,
+                dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
+                details: `Categoría: ${activity.categoryLabel}\nUbicación: ${activity.location}\n\n${activity.description}\n\nConsejos: ${activity.tips}`,
+                location: activity.location,
+                trp: 'true'
+            });
+
+            return `https://calendar.google.com/calendar/render?${params.toString()}`;
+        }
+
+        function getCategoryBadge(category) {
+            const config = CATEGORY_CONFIG[category];
+            return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${config.color} ${config.textColor} text-xs font-semibold">
+                ${config.icon} ${config.label}
+            </span>`;
+        }
+
+        // ============================================
+        // RENDER
+        // ============================================
+        function renderActivities() {
+            activitiesGrid.innerHTML = '';
+            
+            if (filteredActivities.length === 0) {
+                activitiesGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            activitiesGrid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            // Group by day
+            const grouped = {};
+            filteredActivities.forEach(activity => {
+                if (!grouped[activity.day]) grouped[activity.day] = [];
+                grouped[activity.day].push(activity);
+            });
+
+            // Sort days
+            const sortedDays = Object.keys(grouped).sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
+
+            let cardIndex = 0;
+            sortedDays.forEach(day => {
+                const dayActivities = grouped[day].sort((a, b) => {
+                    const timeA = parseTimeToDate(a.time, a.dayIndex).getTime();
+                    const timeB = parseTimeToDate(b.time, b.dayIndex).getTime();
+                    return timeA - timeB;
+                });
+
+                // Day header
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'col-span-full';
+                dayHeader.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4 animate-fade-in-up stagger-${Math.min(++cardIndex, 10)}">
+                        <div class="day-badge px-4 py-1.5 rounded-full text-white text-sm font-semibold tracking-wide shadow-lg shadow-[var(--accent-orange)]/30">${day}</div>
+                        <div class="flex-1 h-px bg-gradient-to-r from-[rgba(56,189,248,0.3)] to-transparent"></div>
+                    </div>
+                `;
+                activitiesGrid.appendChild(dayHeader);
+
+                // Activity cards
+                dayActivities.forEach(activity => {
+                    const card = createActivityCard(activity, ++cardIndex);
+                    activitiesGrid.appendChild(card);
+                });
+            });
+
+            updateStats();
+        }
+
+        function createActivityCard(activity, index) {
+            const card = document.createElement('article');
+            card.className = `activity-card category-${activity.category} rounded-2xl p-5 flex flex-col cursor-pointer focus-visible group`;
+            card.dataset.id = activity.id;
+            card.dataset.category = activity.category;
+            card.style.animationDelay = `${Math.min(index * 50, 500)}ms`;
+            card.setAttribute('role', 'listitem');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('aria-label', `${activity.title}, ${activity.time}, ${activity.location}, ${activity.categoryLabel}`);
+
+            const timeDisplay = activity.endTime 
+                ? `${activity.time} - ${activity.endTime}`
+                : activity.time;
+
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            ${getCategoryBadge(activity.category)}
+                            <time class="text-xs text-[var(--text-secondary)] font-mono whitespace-nowrap">${timeDisplay}</time>
+                        </div>
+                        <h3 class="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--text-accent)] transition-colors line-clamp-1">${activity.title}</h3>
+                    </div>
+                    <button 
+                        class="calendar-btn flex-shrink-0 w-10 h-10 rounded-xl bg-[rgba(56,189,248,0.1)] hover:bg-[var(--text-accent)] hover:text-[var(--bg-primary)] flex items-center justify-center transition-all text-[var(--text-accent)] focus-visible"
+                        aria-label="Agregar ${activity.title} a Google Calendar"
+                        data-calendar-url="${generateGoogleCalendarUrl(activity)}"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-[var(--text-secondary)] mt-auto pt-3 border-t border-[rgba(56,189,248,0.1)]">
+                    <svg class="w-4 h-4 flex-shrink-0 text-[var(--text-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate font-medium text-[var(--text-accent)]">${activity.location}</span>
+                </div>
+            `;
+
+            // Event listeners
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.calendar-btn')) {
+                    openModal(activity);
+                }
+            });
+
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal(activity);
+                }
+            });
+
+            const calBtn = card.querySelector('.calendar-btn');
+            calBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.open(calBtn.dataset.calendarUrl, '_blank', 'noopener,noreferrer');
+            });
+
+            return card;
+        }
+
+        function updateStats() {
+            statsTotal.textContent = `${ACTIVITIES.length} actividades totales`;
+            statsVisible.textContent = `${filteredActivities.length} visibles`;
+            statsFiltered.classList.toggle('hidden', filteredActivities.length === ACTIVITIES.length);
+            if (filteredActivities.length !== ACTIVITIES.length) {
+                statsFiltered.textContent = `${ACTIVITIES.length - filteredActivities.length} filtradas`;
+            }
+        }
+
+        // ============================================
+        // FILTER & SEARCH
+        // ============================================
+        function applyFilters() {
+            filteredActivities = ACTIVITIES.filter(activity => {
+                const matchesFilter = currentFilter === 'all' || activity.category === currentFilter;
+                const matchesSearch = searchQuery === '' || 
+                    activity.title.toLowerCase().includes(searchQuery) ||
+                    activity.location.toLowerCase().includes(searchQuery) ||
+                    activity.categoryLabel.toLowerCase().includes(searchQuery) ||
+                    activity.day.toLowerCase().includes(searchQuery);
+                return matchesFilter && matchesSearch;
+            });
+            renderActivities();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            filterButtons.forEach(btn => {
+                const isActive = btn.dataset.filter === filter;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive);
+            });
+            applyFilters();
+        }
+
+        function setSearch(query) {
+            searchQuery = query.toLowerCase().trim();
+            clearSearchBtn.classList.toggle('hidden', !searchQuery);
+            applyFilters();
+        }
+
+        // ============================================
+        // MODAL
+        // ============================================
+        function openModal(activity) {
+            selectedActivity = activity;
+            const config = CATEGORY_CONFIG[activity.category];
+
+            modalTitle.textContent = activity.title;
+            modalCategory.innerHTML = getCategoryBadge(activity.category);
+            modalCategory.querySelector('span').classList.remove('text-xs');
+            modalCategory.querySelector('span').classList.add('text-sm');
+
+            const timeDisplay = activity.endTime 
+                ? `${activity.time} - ${activity.endTime}`
+                : activity.time;
+
+            modalDescription.innerHTML = `
+                <div>
+                    <p class="text-xs font-semibold text-[var(--text-accent)] uppercase tracking-wider mb-1">Día y Horario</p>
+                    <p class="font-medium">${activity.day} · ${timeDisplay}</p>
+                </div>
+                <div class="pt-4 border-t border-[rgba(56,189,248,0.15)]">
+                    <p class="text-xs font-semibold text-[var(--text-accent)] uppercase tracking-wider mb-2">Descripción</p>
+                    <p class="leading-relaxed">${activity.description}</p>
+                </div>
+                <div class="pt-4 border-t border-[rgba(56,189,248,0.15)] bg-[rgba(255,122,0,0.05)] rounded-xl p-4">
+                    <p class="text-xs font-semibold text-[var(--accent-orange)] uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Recomendaciones
+                    </p>
+                    <p class="leading-relaxed">${activity.tips}</p>
+                </div>
+            `;
+
+            modalCalendarBtn.href = generateGoogleCalendarUrl(activity);
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Focus management
+            setTimeout(() => modalCloseBtn.focus(), 100);
+            
+            // Trap focus
+            trapFocus(modal);
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            selectedActivity = null;
+        }
+
+        function trapFocus(element) {
+            const focusableElements = element.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            element.addEventListener('keydown', function handleTab(e) {
+                if (e.key !== 'Tab') return;
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+        });
+
+        searchInput.addEventListener('input', (e) => setSearch(e.target.value));
+        
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            setSearch('');
+            searchInput.focus();
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modalCloseBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // ============================================
+        // INIT
+        // ============================================
+        function init() {
+            renderActivities();
+            
+            // Keyboard navigation for filter buttons
+            filterButtons.forEach((btn, index) => {
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        filterButtons[(index + 1) % filterButtons.length].focus();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        filterButtons[(index - 1 + filterButtons.length) % filterButtons.length].focus();
+                    }
+                });
+            });
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
